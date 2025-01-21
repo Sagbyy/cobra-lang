@@ -165,13 +165,6 @@ def p_bloc(p):
     else : 
         p[0] = ('bloc',p[1],p[2] )
 
-def p_statement_function_with_return(p):
-    'statement : FUNCTION NAME LPAREN param_list RPAREN LBRACKET bloc RBRACKET'
-    p[0] = ('function_with_return ', p[2], p[4], p[7])    
-
-def p_statement_function_with_return_call(p):
-    'statement : NAME LPAREN arg_list RPAREN SEMI'
-    p[0] = ('function_with_param', p[1], p[3])  
 
 def p_statement_function_void_param(p):
     'statement : FUNCTION NAME LPAREN param_list RPAREN LBRACKET bloc RBRACKET'
