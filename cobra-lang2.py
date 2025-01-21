@@ -7,14 +7,13 @@ reserved={
         'else':'ELSE',
         'while':'WHILE', 
         'for':'FOR',
-        'range': 'RANGE',
-        'function' : 'FUNCTION'
-       
+        'function' : 'FUNCTION',
+        'return' : 'RETURN'
         }
  
 tokens = [ 'NUMBER','MINUS', 'PLUS','TIMES','DIVIDE', 'LPAREN',
           'RPAREN', 'OR', 'AND', 'SEMI', 'EGAL', 'NAME', 'INF', 'SUP',
-          'EGALEGAL','INFEG', 'LBRACKET', 'RBRACKET']+ list(reserved.values())
+          'EGALEGAL','INFEG', 'LBRACKET', 'RBRACKET','COMMA']+ list(reserved.values())
  
 t_PLUS = r'\+' 
 t_MINUS = r'-' 
@@ -33,6 +32,7 @@ t_INFEG = r'\<\='
 t_EGALEGAL = r'\=\='
 t_LBRACKET = r'\{'
 t_RBRACKET = r'\}'
+t_COMMA =r','
 
 
  
@@ -88,25 +88,39 @@ def evalInst(p):
                 evalInst(p[3])  # Sinon, exécuter le bloc "else"
         elif p[0]=='assign':
             names[p[1]] = evalExpr(p[2])
+        elif p[0] == 'incrementation' :
+            names[p[1]] += 1    
+        elif p[0] == 'decrementation' :
+            names[p[1]] -= 1    
         elif p[0] =='while':
             while evalExpr(p[1]):# tant que la condition (p[1]) est vrai dans le while
                 evalInst(p[2])# executer le bloc
-        elif p[0] == 'for':  
-            iter_var = p[1]  # Recup le nom de la variable d'iteration ( exemple  i)
-            iter_range = evalExpr(p[2])  # Évalue l'expression définissant la plage (range) de la boucle
-            if isinstance(iter_range, int):  # Vérifie si la plage est un entier
-                for i in range(iter_range):  # Itère de 0 à iter_range - 1
-                    names[iter_var] = i  # Associe à la variable d'itération sa valeur courante
-                    evalInst(p[3])  # Exécute le bloc de code associé pour chaque itération
-            else:
-                raise ValueError("il faut iterer avce une val intiger!!!")  # Erreur si range n'est pas un entier
-        elif p[0] == 'function':
+        elif p[0] == 'for' :
+            evalInst(p[1])  # Initialisation
+            while evalExpr(p[2]):  # Condition
+                evalInst(p[4])  # Corps de la boucle
+                evalInst(p[3])  # Incrémentation
+        elif p[0] == 'function_void':
             fonctions[p[1]]=p[2] # Stocke dans le dictionnaire fonctions la fonction avec son nom comme clé et son bloc comme valeur
-        elif p[0] =='function_call':# si c'est un apple à une fonction
+        elif p[0] =='function_void_call':# si c'est un apple à une fonction
             if p[1] in fonctions: #si la fonction est bien dans mon tableau
                 evalInst(fonctions[p[1]]) #on evalue celle-ci avec evalInst
+                print(f"la fonction`{p[1]}` existe ")
             else:
                 raise ValueError(f"la fonction '{p[1]}' n'existe pas") #on leve une exception                
+    
+        elif p[0] == 'function_void_param':
+            # Stocker la fonction avec son nom et ses paramètres dans ma lst de functions
+            fonctions[p[1]] = (p[2], p[3])  # (nom de la func, (liste des paramètres, bloc))
+        elif p[0] == 'function_void_param_call':#appelle de la func
+            if p[1] in fonctions:
+                params, bloc = fonctions[p[1]]
+                # Associer les arguments aux paramètres
+                for param, arg in zip(params, p[2]):#La fonction zip associe chaque elem de la lst params avec un elem correspondant dans p[2]
+                    names[param] = evalExpr(arg)#Stocke ces associations dans la lst names ex : names = {'a': 5, 'b': 10}...
+                evalInst(bloc)  # Exécuter le bloc de la fonction
+            else:
+                raise ValueError(f"la fonction '{p[1]}' n'existe pas")
 
  
  
@@ -116,31 +130,24 @@ def evalExpr(t):
     if isinstance(t, int):  # Cas d'un entier
         return t
     if isinstance(t, str):  # Cas d'un nom (variable)
+        if t == 'true': return True
+        if t == 'false': return False
         if t in names:#si la variable existe dans mon tableau de variables
-            return t #je la return
+            return names[t] #je la return
         else:
             raise NameError(f"Variable '{t}' non définie")#on léve une exception    
         #return names.get(t, 0)  # Retourner 0 si le nom n'existe pas
-    if t[0] == '+':
-        return evalExpr(t[1]) + evalExpr(t[2])
-    if t[0] == '-':
-        return evalExpr(t[1]) - evalExpr(t[2])
-    if t[0] == '*':
-        return evalExpr(t[1]) * evalExpr(t[2])
-    if t[0] == '/':
-        return evalExpr(t[1]) / evalExpr(t[2])
-    if t[0] == '&':
-        return evalExpr(t[1]) and evalExpr(t[2])
-    if t[0] == '|':
-        return evalExpr(t[1]) or evalExpr(t[2])
-    if t[0] == '<':
-        return evalExpr(t[1]) < evalExpr(t[2])
-    if t[0] == '>':
-        return evalExpr(t[1]) > evalExpr(t[2])
-    if t[0] == '==':
-        return evalExpr(t[1]) == evalExpr(t[2])
-    if t[0] == '<=':
-        return evalExpr(t[1]) <= evalExpr(t[2])
+    if t[0]=='+': return evalExpr(t[1]) + evalExpr(t[2])
+    if t[0]=='*': return evalExpr(t[1]) * evalExpr(t[2])
+    if t[0]=='/': return evalExpr(t[1]) / evalExpr(t[2])
+    if t[0]=='-': return evalExpr(t[1]) - evalExpr(t[2])
+    if t[0]=='<': return evalExpr(t[1]) < evalExpr(t[2])
+    if t[0]=='<=': return evalExpr(t[1]) <= evalExpr(t[2])
+    if t[0]=='>': return evalExpr(t[1]) > evalExpr(t[2])
+    if t[0]=='>=': return evalExpr(t[1]) >= evalExpr(t[2])
+    if t[0]=='==': return evalExpr(t[1]) == evalExpr(t[2])
+    if t[0]=='&': return evalExpr(t[1]) and evalExpr(t[2])
+    if t[0]=='|': return evalExpr(t[1]) or evalExpr(t[2])
 
  
  
@@ -158,13 +165,47 @@ def p_bloc(p):
     else : 
         p[0] = ('bloc',p[1],p[2] )
 
-def p_statement_function(p):
-    'statement : FUNCTION NAME LPAREN RPAREN LBRACKET bloc RBRACKET '
-    p[0] = ('function', p[2], p[6])        
+def p_statement_function_with_return(p):
+    'statement : FUNCTION NAME LPAREN param_list RPAREN LBRACKET bloc RBRACKET'
+    p[0] = ('function_with_return ', p[2], p[4], p[7])    
 
-def p_statement_function_call(p):
+def p_statement_function_with_return_call(p):
+    'statement : NAME LPAREN arg_list RPAREN SEMI'
+    p[0] = ('function_with_param', p[1], p[3])  
+
+def p_statement_function_void_param(p):
+    'statement : FUNCTION NAME LPAREN param_list RPAREN LBRACKET bloc RBRACKET'
+    p[0] = ('function_void_param', p[2], p[4], p[7])      
+
+def p_statement_function_void_param_call(p):
+    'statement : NAME LPAREN arg_list RPAREN SEMI'
+    p[0] = ('function_void_param_call', p[1], p[3])      
+
+def p_param_list(p):
+    '''param_list : NAME COMMA param_list
+                  | NAME
+                  '''
+    if len(p) == 2:
+        p[0] = [p[1]] if p[1] != 'empty' else []
+    else:
+        p[0] = [p[1]] + p[3]
+
+def p_arg_list(p):
+    '''arg_list : expression COMMA arg_list
+                | expression
+                '''
+    if len(p) == 2:
+        p[0] = [p[1]] if p[1] != 'empty' else [] #if ternaire ici 
+    else:
+        p[0] = [p[1]] + p[3] 
+
+def p_statement_function_void(p):
+    'statement : FUNCTION NAME LPAREN RPAREN LBRACKET bloc RBRACKET '
+    p[0] = ('function_void', p[2], p[6])        
+
+def p_statement_function_call_void(p):
     'statement : NAME LPAREN RPAREN SEMI'
-    p[0]= ('function_call', p[1])    
+    p[0]= ('function_void_call', p[1])    
  
  
 def p_statement_expr(p): 
@@ -177,8 +218,8 @@ def p_statement_while(p):
     p[0] = ('while', p[3], p[6])    
 
 def p_statement_for(p):
-    'statement : FOR NAME RANGE LPAREN expression RPAREN LBRACKET bloc RBRACKET'
-    p[0] =('for', p[2], p[5], p[8])    
+    'statement : FOR LPAREN statement SEMI expression SEMI statement RPAREN LBRACKET bloc RBRACKET'
+    p[0] = ('for', p[3], p[5], p[7], p[10])   
 
 def p_statement_if(p):
     'statement : IF LPAREN expression RPAREN LBRACKET bloc RBRACKET'
@@ -212,6 +253,14 @@ def p_expression_binop_inf(p):
 def p_expression_group(p): 
     'expression : LPAREN expression RPAREN' 
     p[0] = p[2] 
+
+def p_statement_increment(p):
+    'statement : NAME PLUS PLUS'
+    p[0] = ('incrementation', p[1])
+
+def p_statement_decrement(p):
+    'statement : NAME MINUS MINUS'
+    p[0] = ('decrementation', p[1])    
  
 def p_expression_number(p): 
     'expression : NUMBER' 
@@ -220,6 +269,7 @@ def p_expression_number(p):
 def p_expression_name(p): 
     'expression : NAME' 
     p[0] =  p[1]
+
  
 #pour l'emplacement des erreurs syntaxique
 def p_error(p):
@@ -234,7 +284,7 @@ def p_error(p):
  
 import ply.yacc as yacc
 yacc.yacc()
-#s = 'i = 5; if(3 < 5 ){print(12);};'
-s='for i range (5) { print(i); };'
+s = 'function test(a, b){print(a + b);}; test(21, 9);;'
+#s = 'i = 0; while(i < 5) { print(i); i++; };'
 yacc.parse(s)
  
