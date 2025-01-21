@@ -7,13 +7,13 @@ reserved={
         'else':'ELSE',
         'while':'WHILE', 
         'for':'FOR',
-        'function' : 'FUNCTION'
-       
+        'function' : 'FUNCTION',
+        'return' : 'RETURN'
         }
  
 tokens = [ 'NUMBER','MINUS', 'PLUS','TIMES','DIVIDE', 'LPAREN',
           'RPAREN', 'OR', 'AND', 'SEMI', 'EGAL', 'NAME', 'INF', 'SUP',
-          'EGALEGAL','INFEG', 'LBRACKET', 'RBRACKET']+ list(reserved.values())
+          'EGALEGAL','INFEG', 'LBRACKET', 'RBRACKET','COMMA']+ list(reserved.values())
  
 t_PLUS = r'\+' 
 t_MINUS = r'-' 
@@ -32,6 +32,7 @@ t_INFEG = r'\<\='
 t_EGALEGAL = r'\=\='
 t_LBRACKET = r'\{'
 t_RBRACKET = r'\}'
+t_COMMA =r','
 
 
  
@@ -99,14 +100,27 @@ def evalInst(p):
             while evalExpr(p[2]):  # Condition
                 evalInst(p[4])  # Corps de la boucle
                 evalInst(p[3])  # Incrémentation
-        elif p[0] == 'function':
+        elif p[0] == 'function_void':
             fonctions[p[1]]=p[2] # Stocke dans le dictionnaire fonctions la fonction avec son nom comme clé et son bloc comme valeur
-        elif p[0] =='function_call':# si c'est un apple à une fonction
+        elif p[0] =='function_void_call':# si c'est un apple à une fonction
             if p[1] in fonctions: #si la fonction est bien dans mon tableau
                 evalInst(fonctions[p[1]]) #on evalue celle-ci avec evalInst
                 print(f"la fonction`{p[1]}` existe ")
             else:
                 raise ValueError(f"la fonction '{p[1]}' n'existe pas") #on leve une exception                
+    
+        elif p[0] == 'function_void_param':
+            # Stocker la fonction avec son nom et ses paramètres dans ma lst de functions
+            fonctions[p[1]] = (p[2], p[3])  # (nom de la func, (liste des paramètres, bloc))
+        elif p[0] == 'function_void_param_call':#appelle de la func
+            if p[1] in fonctions:
+                params, bloc = fonctions[p[1]]
+                # Associer les arguments aux paramètres
+                for param, arg in zip(params, p[2]):#La fonction zip associe chaque elem de la lst params avec un elem correspondant dans p[2]
+                    names[param] = evalExpr(arg)#Stocke ces associations dans la lst names ex : names = {'a': 5, 'b': 10}...
+                evalInst(bloc)  # Exécuter le bloc de la fonction
+            else:
+                raise ValueError(f"la fonction '{p[1]}' n'existe pas")
 
  
  
@@ -151,13 +165,40 @@ def p_bloc(p):
     else : 
         p[0] = ('bloc',p[1],p[2] )
 
+
+def p_statement_function_void_param(p):
+    'statement : FUNCTION NAME LPAREN param_list RPAREN LBRACKET bloc RBRACKET'
+    p[0] = ('function_void_param', p[2], p[4], p[7])      
+
+def p_statement_function_void_param_call(p):
+    'statement : NAME LPAREN arg_list RPAREN SEMI'
+    p[0] = ('function_void_param_call', p[1], p[3])      
+
+def p_param_list(p):
+    '''param_list : NAME COMMA param_list
+                  | NAME
+                  '''
+    if len(p) == 2:
+        p[0] = [p[1]] if p[1] != 'empty' else []
+    else:
+        p[0] = [p[1]] + p[3]
+
+def p_arg_list(p):
+    '''arg_list : expression COMMA arg_list
+                | expression
+                '''
+    if len(p) == 2:
+        p[0] = [p[1]] if p[1] != 'empty' else [] #if ternaire ici 
+    else:
+        p[0] = [p[1]] + p[3] 
+
 def p_statement_function_void(p):
     'statement : FUNCTION NAME LPAREN RPAREN LBRACKET bloc RBRACKET '
-    p[0] = ('function', p[2], p[6])        
+    p[0] = ('function_void', p[2], p[6])        
 
 def p_statement_function_call_void(p):
     'statement : NAME LPAREN RPAREN SEMI'
-    p[0]= ('function_call', p[1])    
+    p[0]= ('function_void_call', p[1])    
  
  
 def p_statement_expr(p): 
@@ -236,7 +277,7 @@ def p_error(p):
  
 import ply.yacc as yacc
 yacc.yacc()
-s = 'function test(){print(21 + 10);}; test();;'
+s = 'function test(a, b){print(a + b);}; test(21, 9);;'
 #s = 'i = 0; while(i < 5) { print(i); i++; };'
 yacc.parse(s)
  

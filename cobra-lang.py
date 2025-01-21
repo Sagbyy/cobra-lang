@@ -125,18 +125,17 @@ def evalInst(p):
         if p[0] == "decrementation":
             names[p[1]] -= 1
         if p[0] == "if":
-            # Évalue l'instruction `if` et ses blocs associés
-            if evalExpr(p[1]):  # Si la condition est vraie
-                evalInst(p[2])  # Exécute le bloc `if`
-            elif len(p) > 3:  # Si un bloc `elif` ou `else` existe
-                evalInst(p[3])  # Exécute le bloc suivant (`elif` ou `else`)
+            if evalExpr(p[1]):
+                evalInst(p[2])
+            elif len(p) > 3:
+                evalInst(p[3])
         if p[0] == "elif":
-            if evalExpr(p[1]):  # Si la condition `elif` est vraie
-                evalInst(p[2])  # Exécute le bloc `elif`
-            elif len(p) > 3:  # Si un bloc suivant (`elif` ou `else`) existe
-                evalInst(p[3])  # Exécute le bloc suivant
+            if evalExpr(p[1]):
+                evalInst(p[2])
+            elif len(p) > 3:
+                evalInst(p[3])
         if p[0] == "else":
-            evalInst(p[1])  # Exécute le bloc `else`
+            evalInst(p[1])
 
 
 def evalExpr(t):
@@ -302,7 +301,7 @@ yacc.yacc()
 # s = 'a = 2; print(a);'
 # s = "a = 0; if(a == 0) { print(a); } else { print(5+5); };"
 # s = "else { print(5+5); };"
-s = "a = 0; if(a == 2) { print(a); } elif(a == 1) { print(5+5); } elif(a ==5 ) { print(5*5); } else { print(5+5*2); };"
+# s = "a = 0; if(a == 2) { print(a); } elif(a == 1) { print(5+5); } elif(a ==5 ) { print(5*5); } else { print(5+5*2); };"
 # s = 'i = 0; while(i < 5) { print(i); i++; };'
 # s = 'a=0; a++; a++; a++; print(a);'
 yacc.parse(s)
