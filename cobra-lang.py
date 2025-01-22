@@ -9,6 +9,8 @@ reserved = {
     "elif": "ELIF",
     "while": "WHILE",
     "for": "FOR",
+    "function": "FUNCTION",
+    "return": "RETURN",
 }
 
 tokens = [
@@ -31,6 +33,8 @@ tokens = [
     "LBRACKET",
     "RBRACKET",
     "BOOLEAN",
+    "COMMA",
+    "RETURN",
 ] + list(reserved.values())
 
 t_PLUS = r"\+"
@@ -49,6 +53,7 @@ t_INFEG = r"\<\="
 t_EGALEGAL = r"\=\="
 t_LBRACKET = r"\{"
 t_RBRACKET = r"\}"
+t_COMMA = r","
 
 
 def t_NAME(t):
@@ -90,6 +95,7 @@ import ply.lex as lex
 lex.lex()
 
 names = {}
+fonctions = {}
 precedence = (
     ("left", "OR"),
     ("left", "AND"),
@@ -136,6 +142,40 @@ def evalInst(p):
                 evalInst(p[3])
         if p[0] == "else":
             evalInst(p[1])
+        elif p[0] == "function_void":
+            fonctions[p[1]] = p[
+                2
+            ]  # Stocke dans le dictionnaire fonctions la fonction avec son nom comme clé et son bloc comme valeur
+        elif p[0] == "function_void_call":  # si c'est un apple à une fonction
+            if p[1] in fonctions:  # si la fonction est bien dans mon tableau
+                evalInst(fonctions[p[1]])  # on evalue celle-ci avec evalInst
+            else:
+                raise ValueError(
+                    f"la fonction '{p[1]}' n'existe pas"
+                )  # on leve une exception
+
+        elif p[0] == "function_void_param":
+            # Stocker la fonction avec son nom et ses paramètres dans ma lst de functions
+            fonctions[p[1]] = (
+                p[2],
+                p[3],
+            )  # (nom de la func, (liste des paramètres, bloc))
+        elif p[0] == "function_void_param_call":  # appelle de la func
+            if p[1] in fonctions:
+                params, bloc = fonctions[p[1]]
+                # Associer les arguments aux paramètres
+                for param, arg in zip(
+                    params, p[2]
+                ):  # La fonction zip associe chaque elem de la lst params avec un elem correspondant dans p[2]
+                    names[param] = evalExpr(
+                        arg
+                    )  # Stocke ces associations dans la lst names ex : names = {'a': 5, 'b': 10}...
+                evalInst(bloc)  # Exécuter le bloc de la fonction
+            else:
+                raise ValueError(f"la fonction '{p[1]}' n'existe pas")
+        elif p[0] == "bloc_function":
+            evalInst(p[1])
+            evalInst(p[2])
 
 
 def evalExpr(t):
@@ -189,6 +229,54 @@ def p_bloc(p):
         p[0] = ("bloc", p[1], p[2])
 
 
+def p_bloc_function(p):
+    """bloc_function: bloc_function statement SEMI
+    | RETURN expression SEMI"""
+    if p[1] == "return":
+        p[0] = ("bloc_function", p[1], p[2])
+    else:
+        p[0] = ("bloc_function", p[1], "empty")
+
+def p_statement_function_void_param(p):
+    "statement : FUNCTION NAME LPAREN param_list RPAREN LBRACKET bloc RBRACKET"
+    p[0] = ("function_void_param", p[2], p[4], p[7])
+
+
+def p_statement_function_void_param_call(p):
+    "statement : NAME LPAREN arg_list RPAREN"
+    p[0] = ("function_void_param_call", p[1], p[3])
+
+
+def p_param_list(p):
+    """param_list : NAME COMMA param_list
+    | NAME
+    """
+    if len(p) == 2:
+        p[0] = [p[1]] if p[1] != "empty" else []
+    else:
+        p[0] = [p[1]] + p[3]
+
+
+def p_arg_list(p):
+    """arg_list : expression COMMA arg_list
+    | expression
+    """
+    if len(p) == 2:
+        p[0] = [p[1]] if p[1] != "empty" else []  # if ternaire ici
+    else:
+        p[0] = [p[1]] + p[3]
+
+
+def p_statement_function_void(p):
+    "statement : FUNCTION NAME LPAREN RPAREN LBRACKET bloc RBRACKET"
+    p[0] = ("function_void", p[2], p[6])
+
+
+def p_statement_function_call_void(p):
+    "statement : NAME LPAREN RPAREN"
+    p[0] = ("function_void_call", p[1])
+
+
 def p_statement_for(p):
     "statement : FOR LPAREN statement SEMI expression SEMI statement RPAREN LBRACKET bloc RBRACKET"
     p[0] = ("for", p[3], p[5], p[7], p[10])
@@ -212,7 +300,7 @@ def p_statement_if(p):
     elif len(p) == 12:
         # if (condition) { bloc } else { bloc }
         p[0] = ("if", p[3], p[6], ("else", p[10]))
-        
+
 
 def p_elif_chain(p):
     """elif_chain : ELIF LPAREN expression RPAREN LBRACKET bloc RBRACKET
@@ -304,4 +392,6 @@ yacc.yacc()
 # s = "a = 0; if(a == 2) { print(a); } elif(a == 1) { print(5+5); } elif(a ==5 ) { print(5*5); } else { print(5+5*2); };"
 # s = 'i = 0; while(i < 5) { print(i); i++; };'
 # s = 'a=0; a++; a++; a++; print(a);'
+s = "function test(a, b){print(a + b);}; test(21, 9);"
+s = "function test(a, b){print(a + b);}; test(5, 5);"
 yacc.parse(s)
