@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from genereTreeGraphviz2 import printTreeGraph
+from re import search
 
 reserved = {
     "print": "PRINT",
@@ -88,6 +89,14 @@ def t_newline(t):
 def t_error(t):
     print("Illegal character '%s'" % t.value[0])
     t.lexer.skip(1)
+
+
+def read_cobra_file(file_path: str) -> str:
+    if search(r"\.cobra$", file_path) is None:
+        raise ValueError("The file is not a .cobra file")
+
+    with open(file_path, "r") as file:
+        return file.read()
 
 
 import ply.lex as lex
@@ -229,13 +238,14 @@ def p_bloc(p):
         p[0] = ("bloc", p[1], p[2])
 
 
-def p_bloc_function(p):
-    """bloc_function: bloc_function statement SEMI
-    | RETURN expression SEMI"""
-    if p[1] == "return":
-        p[0] = ("bloc_function", p[1], p[2])
-    else:
-        p[0] = ("bloc_function", p[1], "empty")
+# def p_bloc_function(p):
+#     """bloc_function: bloc_function statement SEMI
+#     | RETURN expression SEMI"""
+#     if p[1] == "return":
+#         p[0] = ("bloc_function", p[1], p[2])
+#     else:
+#         p[0] = ("bloc_function", p[1], "empty")
+
 
 def p_statement_function_void_param(p):
     "statement : FUNCTION NAME LPAREN param_list RPAREN LBRACKET bloc RBRACKET"
@@ -394,4 +404,5 @@ yacc.yacc()
 # s = 'a=0; a++; a++; a++; print(a);'
 s = "function test(a, b){print(a + b);}; test(21, 9);"
 s = "function test(a, b){print(a + b);}; test(5, 5);"
+s = read_cobra_file("main.cobra")
 yacc.parse(s)
