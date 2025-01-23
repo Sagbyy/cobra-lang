@@ -103,15 +103,16 @@ def read_cobra_file(file_path: str) -> str:
 
 def add_bloc(left, right):
     while right != "empty":
-        add_bloc(left[1], left[2])
         stack.append(right)
+        add_bloc(left[1], left[2])
         return
 
     stack.append(left)
 
-def run_and_pop(s):
-    while len(stack) != s:
-        evalInst(stack.pop())
+def run_and_pop(size):
+    while len(stack) != size:
+        bloc = stack.pop()
+        evalInst(bloc)
 
 
 import ply.lex as lex
@@ -136,8 +137,9 @@ def evalInst(p):
         if p[0] == "print":
             print(evalExpr(p[1]))
         if p[0] == "bloc":
-            s=len(stack)
+            s = len(stack)
             add_bloc(p[1], p[2])
+            print(stack)
             run_and_pop(s)
         if p[0] == "assign":
             names[p[1]] = evalExpr(p[2])
@@ -150,7 +152,7 @@ def evalInst(p):
                 evalInst(p[4])  # Corps de la boucle
                 evalInst(p[3])  # Incrémentation
         if p[0] == "incrementation":
-            names[p[1]] += 1
+            names[p[1]] += p[2]
         if p[0] == "decrementation":
             names[p[1]] -= 1
         if p[0] == "if":
@@ -247,15 +249,6 @@ def p_bloc(p):
         p[0] = ("bloc", p[1], "empty")
     else:
         p[0] = ("bloc", p[1], p[2])
-
-
-# def p_bloc_function(p):
-#     """bloc_function: bloc_function statement SEMI
-#     | RETURN expression SEMI"""
-#     if p[1] == "return":
-#         p[0] = ("bloc_function", p[1], p[2])
-#     else:
-#         p[0] = ("bloc_function", p[1], "empty")
 
 
 def p_statement_function_void_param(p):
@@ -363,8 +356,12 @@ def p_expression_group(p):
 
 
 def p_statement_increment(p):
-    "statement : NAME PLUS PLUS"
-    p[0] = ("incrementation", p[1])
+    """statement : NAME PLUS PLUS
+    | NAME PLUS EGAL expression"""
+    if len(p) == 4:
+        p[0] = ("incrementation", p[1], p[4])
+    else:
+        p[0] = ("incrementation", p[1], 1)
 
 
 def p_statement_decrement(p):
@@ -411,29 +408,8 @@ s = "function test(a, b){print(a + b);}; test(21, 9);"
 s = "function test(a, b){print(a + b);}; test(5, 5);"
 s = read_cobra_file("main.cobra")
 # s = "function test(a, b){print(a + b);}; test(21, 9);"
-# s = "function test(a, b){print(a + b);}; test(5, 5);"
+s = "function test(a, b){print(a + b);}; test(5 + 5);"
 # s = "if (1 == 1) { print(1); };"
 # s = "print(1); print(2); print(3);"
+# s = "a = 1; print(a);"
 yacc.parse(s)
-
-print(stack)
-
-[
-    ("assign", "a", 0),
-    (
-        "if",
-        ("==", "a", 2),
-        ("bloc", ("print", "a"), "empty"),
-        (
-            "elif",
-            ("==", "a", 1),
-            ("bloc", ("print", ("+", 5, 5)), "empty"),
-            (
-                "elif",
-                ("==", "a", 5),
-                ("bloc", ("print", ("*", 5, 5)), "empty"),
-                ("else", ("bloc", ("print", ("+", 5, ("*", 5, 2))), "empty")),
-            ),
-        ),
-    ),
-]
