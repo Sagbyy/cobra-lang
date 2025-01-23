@@ -109,6 +109,7 @@ def add_bloc(left, right):
 
     stack.append(left)
 
+
 def run_and_pop(size):
     while len(stack) != size:
         bloc = stack.pop()
@@ -141,7 +142,6 @@ def evalInst(p):
             add_bloc(p[1], p[2])
             print(stack)
             run_and_pop(s)
->>>>>>> fd03552f97e73fcf806ea570ad91892c75c5e714
         if p[0] == "assign":
             names[p[1]] = evalExpr(p[2])
         if p[0] == "while":
@@ -168,34 +168,46 @@ def evalInst(p):
                 evalInst(p[3])
         if p[0] == "else":
             evalInst(p[1])
-        elif p[0] == 'function_void':
-            fonctions[p[1]]=p[2] # Stocke dans le dictionnaire fonctions la fonction avec son nom comme clé et son bloc comme valeur
-        elif p[0] =='function_void_call':# si c'est un apple à une fonction
-            if p[1] in fonctions: #si la fonction est bien dans mon tableau
-                #je verifie qu'il n'attend pas d'agument
+        elif p[0] == "function_void":
+            fonctions[p[1]] = p[
+                2
+            ]  # Stocke dans le dictionnaire fonctions la fonction avec son nom comme clé et son bloc comme valeur
+        elif p[0] == "function_void_call":  # si c'est un apple à une fonction
+            if p[1] in fonctions:  # si la fonction est bien dans mon tableau
+                # je verifie qu'il n'attend pas d'agument
                 param = fonctions[p[1]]
-                if(param==0):
+                if param == 0:
                     print("aucun param attendue")
-                    evalInst(fonctions[p[1]]) #on evalue celle-ci avec evalInst
+                    evalInst(fonctions[p[1]])  # on evalue celle-ci avec evalInst
                     print(f"la fonction`{p[1]}` existe ")
                 else:
-                    print("cette fonction attend des arguments ")    
+                    print("cette fonction attend des arguments ")
             else:
-                raise ValueError(f"la fonction '{p[1]}' n'existe pas") #on leve une exception                
-    
-        elif p[0] == 'function_void_param':
+                raise ValueError(
+                    f"la fonction '{p[1]}' n'existe pas"
+                )  # on leve une exception
+
+        elif p[0] == "function_void_param":
             # Stocker la fonction avec son nom et ses paramètres dans ma lst de functions
-            fonctions[p[1]] = (p[2], p[3])  # (nom de la func, (liste des paramètres, bloc))
-        elif p[0] == 'function_void_param_call':#appelle de la func
+            fonctions[p[1]] = (
+                p[2],
+                p[3],
+            )  # (nom de la func, (liste des paramètres, bloc))
+        elif p[0] == "function_void_param_call":  # appelle de la func
             if p[1] in fonctions:
                 params, bloc = fonctions[p[1]]
 
                 # Associer les arguments aux paramètres
-                for param, arg in zip(params, p[2]):#La fonction zip associe chaque elem de la lst params avec un elem correspondant dans p[2]
-                    names[param] = evalExpr(arg)#Stocke ces associations dans la lst names ex : names = {'a': 5, 'b': 10}...
+                for param, arg in zip(
+                    params, p[2]
+                ):  # La fonction zip associe chaque elem de la lst params avec un elem correspondant dans p[2]
+                    names[param] = evalExpr(
+                        arg
+                    )  # Stocke ces associations dans la lst names ex : names = {'a': 5, 'b': 10}...
                 evalInst(bloc)  # Exécuter le bloc de la fonction
             else:
                 raise ValueError(f"la fonction  n'existe pas")
+
 
 def evalExpr(t):
     if type(t) == int:
@@ -249,39 +261,43 @@ def p_bloc(p):
 
 
 def p_statement_function_void_param(p):
-    'statement : FUNCTION NAME LPAREN param_list RPAREN LBRACKET bloc RBRACKET'
-    p[0] = ('function_void_param', p[2], p[4], p[7])      
+    "statement : FUNCTION NAME LPAREN param_list RPAREN LBRACKET bloc RBRACKET"
+    p[0] = ("function_void_param", p[2], p[4], p[7])
+
 
 def p_statement_function_void_param_call(p):
-    'statement : NAME LPAREN arg_list RPAREN '
-    p[0] = ('function_void_param_call', p[1], p[3])      
+    "statement : NAME LPAREN arg_list RPAREN"
+    p[0] = ("function_void_param_call", p[1], p[3])
+
 
 def p_param_list(p):
-    '''param_list : NAME COMMA param_list
-                  | NAME
-                  '''
+    """param_list : NAME COMMA param_list
+    | NAME
+    """
     if len(p) == 2:
-        p[0] = [p[1]] if p[1] != '' else []
+        p[0] = [p[1]] if p[1] != "" else []
     else:
         p[0] = [p[1]] + p[3]
 
+
 def p_arg_list(p):
-    '''arg_list : expression COMMA arg_list
-                | expression
-                '''
+    """arg_list : expression COMMA arg_list
+    | expression
+    """
     if len(p) == 2:
-        p[0] = [p[1]] if p[1] != '' else [] #if ternaire ici 
+        p[0] = [p[1]] if p[1] != "" else []  # if ternaire ici
     else:
-        p[0] = [p[1]] + p[3] 
+        p[0] = [p[1]] + p[3]
+
 
 def p_statement_function_void(p):
-    'statement : FUNCTION NAME LPAREN RPAREN LBRACKET bloc RBRACKET '
-    p[0] = ('function_void', p[2], p[6])        
+    "statement : FUNCTION NAME LPAREN RPAREN LBRACKET bloc RBRACKET"
+    p[0] = ("function_void", p[2], p[6])
+
 
 def p_statement_function_call_void(p):
-    'statement : NAME LPAREN RPAREN '
-    p[0]= ('function_void_call', p[1])    
- 
+    "statement : NAME LPAREN RPAREN"
+    p[0] = ("function_void_call", p[1])
 
 
 def p_statement_for(p):
@@ -394,12 +410,12 @@ yacc.yacc()
 # s = 'a = 2; print(a);'
 # s = "a = 0; if(a == 0) { print(a); } else { print(5+5); };"
 # s = "else { print(5+5); };"
-#s = "a = 0; if(a == 2) { print(a); } elif(a == 1) { print(5+5); } elif(a ==5 ) { print(5*5); } else { print(5+5*2); };"
+# s = "a = 0; if(a == 2) { print(a); } elif(a == 1) { print(5+5); } elif(a ==5 ) { print(5*5); } else { print(5+5*2); };"
 # s = 'i = 0; while(i < 5) { print(i); i++; };'
 # s = 'a=0; a++; a++; a++; print(a);'
 s = "function test(a, b){print(a + b);}; test();"
-#s = "function test(a, b){print(a + b);}; test(5, 5);"
-#s = read_cobra_file("main.cobra")
+# s = "function test(a, b){print(a + b);}; test(5, 5);"
+# s = read_cobra_file("main.cobra")
 # s = "function test(a, b){print(a + b);}; test(21, 9);"
 s = "function test(a, b){print(a + b);}; test(5 + 5);"
 # s = "if (1 == 1) { print(1); };"
