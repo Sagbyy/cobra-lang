@@ -12,6 +12,7 @@ reserved = {
     "for": "FOR",
     "function": "FUNCTION",
     "return": "RETURN",
+    "input": "INPUT",
 }
 
 tokens = [
@@ -36,6 +37,9 @@ tokens = [
     "BOOLEAN",
     "COMMA",
     "RETURN",
+    "INPUT",
+    "STRING",
+    "DOUBLEQUOTES",
 ] + list(reserved.values())
 
 t_PLUS = r"\+"
@@ -55,6 +59,7 @@ t_EGALEGAL = r"\=\="
 t_LBRACKET = r"\{"
 t_RBRACKET = r"\}"
 t_COMMA = r","
+t_DOUBLEQUOTES = r'"'
 
 stack = []
 
@@ -140,7 +145,6 @@ def evalInst(p):
         if p[0] == "bloc":
             s = len(stack)
             add_bloc(p[1], p[2])
-            print(stack)
             run_and_pop(s)
         if p[0] == "assign":
             names[p[1]] = evalExpr(p[2])
@@ -153,9 +157,16 @@ def evalInst(p):
                 evalInst(p[4])  # Corps de la boucle
                 evalInst(p[3])  # Incrémentation
         if p[0] == "incrementation":
-            names[p[1]] += p[2]
+            # if p[2] == "+":
+            #     names[p[1]] += 1
+            # else:
+            #     names[p[1]] += p[2]
+            names[p[1]] += 1
         if p[0] == "decrementation":
-            names[p[1]] -= 1
+            if p[2] == "-":
+                names[p[1]] -= 1
+            else:
+                names[p[1]] -= p[2]
         if p[0] == "if":
             if evalExpr(p[1]):
                 evalInst(p[2])
@@ -176,7 +187,8 @@ def evalInst(p):
             if p[1] in fonctions:  # si la fonction est bien dans mon tableau
                 # je verifie qu'il n'attend pas d'agument
                 param = fonctions[p[1]]
-                if param == 0:
+                print(param)
+                if len(param) == 0:
                     print("aucun param attendue")
                     evalInst(fonctions[p[1]])  # on evalue celle-ci avec evalInst
                     print(f"la fonction`{p[1]}` existe ")
@@ -207,6 +219,8 @@ def evalInst(p):
                 evalInst(bloc)  # Exécuter le bloc de la fonction
             else:
                 raise ValueError(f"la fonction  n'existe pas")
+        elif p[0] == "input":
+            input(p[1])
 
 
 def evalExpr(t):
@@ -219,6 +233,8 @@ def evalExpr(t):
             return False
         if t in names:
             return names[t]
+        if t.startswith('"') and t.endswith('"'):
+            return t[1:-1]
         return "pas trouve"
     if t[0] == "+":
         return evalExpr(t[1]) + evalExpr(t[2])
@@ -246,7 +262,7 @@ def evalExpr(t):
 
 def p_start(p):
     "start : bloc"
-    print(p[1])
+    # print(p[1])
     printTreeGraph(p[1])
     evalInst(p[1])
 
@@ -335,7 +351,12 @@ def p_elif_chain(p):
         p[0] = ("elif", p[3], p[6], ("else", p[10]))
 
 
-def p_statement_expr(p):
+def p_input_user(p):
+    "expression : INPUT LPAREN expression RPAREN"
+    p[0] = ("input", p[3])
+
+
+def p_statement_print_expr(p):
     "statement : PRINT LPAREN expression RPAREN"
     p[0] = ("print", p[3])
 
@@ -365,17 +386,20 @@ def p_expression_group(p):
 
 
 def p_statement_increment(p):
-    """statement : NAME PLUS PLUS
-    | NAME PLUS EGAL expression"""
-    if len(p) == 4:
-        p[0] = ("incrementation", p[1], p[4])
-    else:
-        p[0] = ("incrementation", p[1], 1)
+    """statement : NAME PLUS PLUS"""
+    # p[0] = ("incrementation", p[1], p[4])
+    p[0] = ("incrementation", p[1])
 
 
 def p_statement_decrement(p):
-    "statement : NAME MINUS MINUS"
-    p[0] = ("decrementation", p[1])
+    """statement : NAME MINUS MINUS
+    | NAME MINUS EGAL expression"""
+    p[0] = ("decrementation", p[1], p[4])
+
+
+def p_expression_string(p):
+    "expression : DOUBLEQUOTES STRING DOUBLEQUOTES"
+    p[0] = p[2]
 
 
 def p_expression_boolean(p):
@@ -406,7 +430,6 @@ import ply.yacc as yacc
 
 yacc.yacc()
 # s = 'print(1+2);print(7*8+(4-4));a=8+8; print(a);b=8+8; print(a+b);'
-# s = 'for(i = 0; i < 10; i++) { print(i); };'
 # s = 'a = 2; print(a);'
 # s = "a = 0; if(a == 0) { print(a); } else { print(5+5); };"
 # s = "else { print(5+5); };"
@@ -415,10 +438,15 @@ yacc.yacc()
 # s = 'a=0; a++; a++; a++; print(a);'
 s = "function test(a, b){print(a + b);}; test();"
 # s = "function test(a, b){print(a + b);}; test(5, 5);"
-# s = read_cobra_file("main.cobra")
 # s = "function test(a, b){print(a + b);}; test(21, 9);"
-s = "function test(a, b){print(a + b);}; test(5 + 5);"
 # s = "if (1 == 1) { print(1); };"
 # s = "print(1); print(2); print(3);"
-# s = "a = 1; print(a);"
+s = "a = 1; a+=5; print(a);"
+s = "a = 1; a-=5; print(a);"
+s = "function test(a, b){print(a + b);}; test(21,9);"
+s = 'for(i = 0; i < 10; i++) { print(i); };'
+s = read_cobra_file("main.cobra")
+s = "a = 10; a-=5; print(a); a--; print(a);"
+s = "function test(){print(5 + 5);}; test();"
+
 yacc.parse(s)
