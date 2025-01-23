@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from genereTreeGraphviz2 import printTreeGraph
+from re import search
 
 reserved = {
     "print": "PRINT",
@@ -90,6 +91,14 @@ def t_newline(t):
 def t_error(t):
     print("Illegal character '%s'" % t.value[0])
     t.lexer.skip(1)
+
+
+def read_cobra_file(file_path: str) -> str:
+    if search(r"\.cobra$", file_path) is None:
+        raise ValueError("The file is not a .cobra file")
+
+    with open(file_path, "r") as file:
+        return file.read()
 
 
 def add_bloc(left, right):
@@ -407,6 +416,9 @@ yacc.yacc()
 s = "a = 0; if(a == 2) { print(a); } elif(a == 1) { print(5+5); } elif(a ==5 ) { print(5*5); } else { print(5+5*2); };"
 # s = 'i = 0; while(i < 5) { print(i); i++; };'
 # s = 'a=0; a++; a++; a++; print(a);'
+s = "function test(a, b){print(a + b);}; test(21, 9);"
+s = "function test(a, b){print(a + b);}; test(5, 5);"
+s = read_cobra_file("main.cobra")
 # s = "function test(a, b){print(a + b);}; test(21, 9);"
 # s = "function test(a, b){print(a + b);}; test(5, 5);"
 # s = "if (1 == 1) { print(1); };"
