@@ -137,8 +137,6 @@ def evalInst(p):
             # runandpop(s)
             # evalInst(p[1])
             # evalInst(p[2])
-        if p[0] == "bracket_bloc":
-            evalInst(p[1])
         if p[0] == "assign":
             names[p[1]] = evalExpr(p[2])
         if p[0] == "while":
@@ -196,9 +194,6 @@ def evalInst(p):
                 evalInst(bloc)  # Exécuter le bloc de la fonction
             else:
                 raise ValueError(f"la fonction '{p[1]}' n'existe pas")
-        elif p[0] == "bloc_function":
-            evalInst(p[1])
-            evalInst(p[2])
 
 
 def evalExpr(t):
@@ -316,13 +311,10 @@ def p_statement_if(p):
     | IF LPAREN expression RPAREN LBRACKET bloc RBRACKET elif_chain
     | IF LPAREN expression RPAREN LBRACKET bloc RBRACKET ELSE LBRACKET bloc RBRACKET"""
     if len(p) == 8:
-        # if (condition) { bloc }
         p[0] = ("if", p[3], p[6])
     elif len(p) == 9:
-        # if (condition) { bloc } elif_chain
         p[0] = ("if", p[3], p[6], p[8])
     elif len(p) == 12:
-        # if (condition) { bloc } else { bloc }
         p[0] = ("if", p[3], p[6], ("else", p[10]))
 
 
@@ -332,13 +324,10 @@ def p_elif_chain(p):
     | ELIF LPAREN expression RPAREN LBRACKET bloc RBRACKET ELSE LBRACKET bloc RBRACKET
     """
     if len(p) == 8:
-        # elif (condition) { bloc }
         p[0] = ("elif", p[3], p[6])
     elif len(p) == 9:
-        # elif (condition) { bloc } elif_chain
         p[0] = ("elif", p[3], p[6], p[8])
     elif len(p) == 12:
-        # elif (condition) { bloc } else { bloc }
         p[0] = ("elif", p[3], p[6], ("else", p[10]))
 
 
