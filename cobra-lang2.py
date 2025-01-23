@@ -13,7 +13,7 @@ reserved={
  
 tokens = [ 'NUMBER','MINUS', 'PLUS','TIMES','DIVIDE', 'LPAREN',
           'RPAREN', 'OR', 'AND', 'SEMI', 'EGAL', 'NAME', 'INF', 'SUP',
-          'EGALEGAL','INFEG', 'LBRACKET', 'RBRACKET','COMMA']+ list(reserved.values())
+          'EGALEGAL','INFEG', 'LBRACKET', 'RBRACKET','COMMA','LHOOK', 'RHOOK']+ list(reserved.values())
  
 t_PLUS = r'\+' 
 t_MINUS = r'-' 
@@ -32,6 +32,8 @@ t_EGALEGAL = r'\=\='
 t_LBRACKET = r'\{'
 t_RBRACKET = r'\}'
 t_COMMA =r','
+t_LHOOK=r'\['
+t_RHOOK=r'\]'
 
 
  
@@ -59,6 +61,7 @@ def t_error(t):
 import ply.lex as lex
 lex.lex()
  
+stack = []
 names={} #tableau pour stocker les variables
 fonctions={}#tableau pour stocker les fonctions 
 precedence = ( 
@@ -75,6 +78,8 @@ def evalInst(p):
     if type(p)==tuple : 
         if p[0]=='print' : print('CALC>',evalExpr(p[1]))
         elif p[0]=='bloc' : 
+            #s = stack.size
+            #
             evalInst(p[1])
             evalInst(p[2])
         elif p[0]=='if':
@@ -170,6 +175,9 @@ def p_bloc(p):
         p[0] = ('bloc',p[1],'empty' )
     else : 
         p[0] = ('bloc',p[1],p[2] )
+
+def p_statement_tab(p):
+    'statement : NAME LHOOK RHOOK'        
 
 
 def p_statement_function_void_param(p):

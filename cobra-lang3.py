@@ -126,7 +126,7 @@ def evalInst(p):
                     names[param] = evalExpr(arg)#Stocke ces associations dans la lst names ex : names = {'a': 5, 'b': 10}...
                 evalInst(bloc)  # Exécuter le bloc de la fonction
             else:
-                raise ValueError(f"la fonction '{p[1]}' n'existe pas")
+                raise ValueError(f"la fonction  n'existe pas")
 
  
  
@@ -284,7 +284,7 @@ def p_error(p):
 import ply.yacc as yacc
 yacc.yacc()
 #s = 'function test(){print(45);}; test();'
-s = 'function test(a, b){print(a + b);}; test();'
+s = 'function test(a, b){print(a + b);}; test(21,9);'
 #s = 'i = 0; while(i < 5) { print(i); i++; };'
 yacc.parse(s)
  
