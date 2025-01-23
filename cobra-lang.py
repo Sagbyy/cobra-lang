@@ -109,6 +109,10 @@ def add_bloc(left, right):
 
     stack.append(left)
 
+def run_and_pop(s):
+    while len(stack) != s:
+        evalInst(stack.pop())
+
 
 import ply.lex as lex
 
@@ -132,11 +136,17 @@ def evalInst(p):
         if p[0] == "print":
             print(evalExpr(p[1]))
         if p[0] == "bloc":
+<<<<<<< HEAD
             # s=stack.size
             #add_bloc(p[1], p[2])
             # runandpop(s)
             evalInst(p[1])
             evalInst(p[2])
+=======
+            s=len(stack)
+            add_bloc(p[1], p[2])
+            run_and_pop(s)
+>>>>>>> fd03552f97e73fcf806ea570ad91892c75c5e714
         if p[0] == "assign":
             names[p[1]] = evalExpr(p[2])
         if p[0] == "while":
