@@ -8,7 +8,7 @@ reserved={
         'while':'WHILE', 
         'for':'FOR',
         'function' : 'FUNCTION',
-        'return' : 'RETURN'
+        'return' : 'RETURN',
         }
  
 tokens = [ 'NUMBER','MINUS', 'PLUS','TIMES','DIVIDE', 'LPAREN',
@@ -284,7 +284,7 @@ def p_error(p):
 import ply.yacc as yacc
 yacc.yacc()
 #s = 'function test(){print(45);}; test();'
-s = 'function test(a, b){print(a + b);}; test(21,9);'
+s = 'function test(a, b){print(a + b);}; test();'
 #s = 'i = 0; while(i < 5) { print(i); i++; };'
 yacc.parse(s)
  

@@ -8,7 +8,7 @@ reserved={
         'while':'WHILE', 
         'for':'FOR',
         'function' : 'FUNCTION',
-        'return' : 'RETURN'
+        'return' : 'RETURN',
         }
  
 tokens = [ 'NUMBER','MINUS', 'PLUS','TIMES','DIVIDE', 'LPAREN',
