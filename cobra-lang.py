@@ -55,6 +55,8 @@ t_LBRACKET = r"\{"
 t_RBRACKET = r"\}"
 t_COMMA = r","
 
+stack = []
+
 
 def t_NAME(t):
     r"[a-zA-Z_][a-zA-Z_0-9]*"
@@ -90,6 +92,15 @@ def t_error(t):
     t.lexer.skip(1)
 
 
+def add_bloc(left, right):
+    while right != "empty":
+        add_bloc(left[1], left[2])
+        stack.append(right)
+        return
+
+    stack.append(left)
+
+
 import ply.lex as lex
 
 lex.lex()
@@ -112,8 +123,11 @@ def evalInst(p):
         if p[0] == "print":
             print(evalExpr(p[1]))
         if p[0] == "bloc":
-            evalInst(p[1])
-            evalInst(p[2])
+            # s=stack.size
+            add_bloc(p[1], p[2])
+            # runandpop(s)
+            # evalInst(p[1])
+            # evalInst(p[2])
         if p[0] == "bracket_bloc":
             evalInst(p[1])
         if p[0] == "assign":
@@ -229,13 +243,14 @@ def p_bloc(p):
         p[0] = ("bloc", p[1], p[2])
 
 
-def p_bloc_function(p):
-    """bloc_function: bloc_function statement SEMI
-    | RETURN expression SEMI"""
-    if p[1] == "return":
-        p[0] = ("bloc_function", p[1], p[2])
-    else:
-        p[0] = ("bloc_function", p[1], "empty")
+# def p_bloc_function(p):
+#     """bloc_function: bloc_function statement SEMI
+#     | RETURN expression SEMI"""
+#     if p[1] == "return":
+#         p[0] = ("bloc_function", p[1], p[2])
+#     else:
+#         p[0] = ("bloc_function", p[1], "empty")
+
 
 def p_statement_function_void_param(p):
     "statement : FUNCTION NAME LPAREN param_list RPAREN LBRACKET bloc RBRACKET"
@@ -389,9 +404,33 @@ yacc.yacc()
 # s = 'a = 2; print(a);'
 # s = "a = 0; if(a == 0) { print(a); } else { print(5+5); };"
 # s = "else { print(5+5); };"
-# s = "a = 0; if(a == 2) { print(a); } elif(a == 1) { print(5+5); } elif(a ==5 ) { print(5*5); } else { print(5+5*2); };"
+s = "a = 0; if(a == 2) { print(a); } elif(a == 1) { print(5+5); } elif(a ==5 ) { print(5*5); } else { print(5+5*2); };"
 # s = 'i = 0; while(i < 5) { print(i); i++; };'
 # s = 'a=0; a++; a++; a++; print(a);'
-s = "function test(a, b){print(a + b);}; test(21, 9);"
-s = "function test(a, b){print(a + b);}; test(5, 5);"
+# s = "function test(a, b){print(a + b);}; test(21, 9);"
+# s = "function test(a, b){print(a + b);}; test(5, 5);"
+# s = "if (1 == 1) { print(1); };"
+# s = "print(1); print(2); print(3);"
 yacc.parse(s)
+
+print(stack)
+
+[
+    ("assign", "a", 0),
+    (
+        "if",
+        ("==", "a", 2),
+        ("bloc", ("print", "a"), "empty"),
+        (
+            "elif",
+            ("==", "a", 1),
+            ("bloc", ("print", ("+", 5, 5)), "empty"),
+            (
+                "elif",
+                ("==", "a", 5),
+                ("bloc", ("print", ("*", 5, 5)), "empty"),
+                ("else", ("bloc", ("print", ("+", 5, ("*", 5, 2))), "empty")),
+            ),
+        ),
+    ),
+]
