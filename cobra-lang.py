@@ -402,7 +402,7 @@ yacc.yacc()
 # s = "a = 0; if(a == 2) { print(a); } elif(a == 1) { print(5+5); } elif(a ==5 ) { print(5*5); } else { print(5+5*2); };"
 # s = 'i = 0; while(i < 5) { print(i); i++; };'
 # s = 'a=0; a++; a++; a++; print(a);'
-s = "function test(a, b){print(a + b);}; test(21, 9);"
-s = "function test(a, b){print(a + b);}; test(5, 5);"
+# s = "function test(a, b){print(a + b);}; test(21, 9);"
+# s = "function test(a, b){print(a + b);}; test(5, 5);"
 s = read_cobra_file("main.cobra")
 yacc.parse(s)
